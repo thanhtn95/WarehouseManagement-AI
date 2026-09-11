@@ -24,6 +24,7 @@
 - There is no `DELETE /users/{id}/role-scopes/{id}` — existing grants render read-only, no revoke action.
 - `security_stamp` is present in the `GET /users/{id}` response but must never be rendered anywhere in the UI (`docs/shortcuts.md`).
 - All commands run from the repository root unless a step says otherwise; `web/` is created by Task 1 and every later `cd`/`npm` command in this plan implicitly runs inside it.
+- **Every `api.GET`/`api.POST` call site uses the full backend path, e.g. `/api/v1/dashboard`, never a short path like `/dashboard`.** Discovered during Task 2: the backend's OpenAPI document publishes every route with the `/api/v1` prefix baked into the path itself (not a stripped mount prefix), so the generated `schema.d.ts`'s `paths` keys are the full path — a short path is not a valid `keyof paths` at all, and `client.ts`'s `baseUrl` is `''` (empty) to match, not `/api/v1`. All of Tasks 3, 8, 9, 10, and 11's code below already reflects this (corrected in place); if you're extracting a task brief from a copy of this plan made before that correction, use the full path regardless of what an older copy's code sample shows.
 
 ---
 
@@ -443,7 +444,12 @@ const authMiddleware: Middleware = {
   },
 };
 
-export const api = createClient<paths>({ baseUrl: '/api/v1' });
+// Empty, not '/api/v1': the backend's OpenAPI document bakes the full
+// '/api/v1/...' prefix into every path, so schema.d.ts's `paths` keys
+// are already fully qualified — every api.GET/api.POST call site below
+// passes the full path (e.g. '/api/v1/dashboard'), and a non-empty
+// baseUrl here would double-prefix it at request time.
+export const api = createClient<paths>({ baseUrl: '' });
 api.use(authMiddleware);
 ```
 
@@ -662,7 +668,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const snapshot = useSyncExternalStore(subscribe, getSnapshot);
 
   const login = useCallback(async (email: string, password: string): Promise<LoginOutcome> => {
-    const { data, response } = await api.POST('/auth/staff/login', {
+    const { data, response } = await api.POST('/api/v1/auth/staff/login', {
       body: { email, password },
     });
 
@@ -687,7 +693,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = useCallback(async () => {
     try {
-      await api.POST('/auth/logout', { body: {} });
+      await api.POST('/api/v1/auth/logout', { body: {} });
     } finally {
       // Clearing local state must happen regardless of whether the network
       // call succeeded — a failed logout must not strand the user in a
@@ -792,7 +798,7 @@ import { withAuthRetry } from '@/shared/api/withAuthRetry';
     // on every request and resolves to no principal on a mismatch — a 401
     // here (even after withAuthRetry's one refresh attempt) means the
     // session is genuinely gone, not a transient network blip.
-    const { response } = await withAuthRetry(() => api.GET('/auth/me', {}));
+    const { response } = await withAuthRetry(() => api.GET('/api/v1/auth/me', {}));
     if (response.status !== 200) {
       clearSession();
     }
@@ -1509,7 +1515,7 @@ function useDashboard(warehouseId: string | null) {
     queryKey: ['dashboard', warehouseId],
     queryFn: () =>
       withAuthRetry(() =>
-        api.GET('/dashboard', { params: { query: { warehouseId: warehouseId! } } }),
+        api.GET('/api/v1/dashboard', { params: { query: { warehouseId: warehouseId! } } }),
       ),
     enabled: warehouseId !== null,
   });
@@ -1687,7 +1693,7 @@ function useUsers(warehouseId: string | null, search: string) {
     queryKey: ['users', warehouseId, search],
     queryFn: () =>
       withAuthRetry(() =>
-        api.GET('/users', {
+        api.GET('/api/v1/users', {
           params: { query: { warehouseId: warehouseId ?? undefined, q: search || undefined, limit: 50 } },
         }),
       ),
@@ -1875,7 +1881,7 @@ export function CreateUserForm() {
 
   const createUser = useMutation({
     mutationFn: (values: FormValues) =>
-      api.POST('/users', {
+      api.POST('/api/v1/users', {
         body: {
           userType: values.userType,
           displayName: values.displayName,
@@ -1975,7 +1981,7 @@ function renderView() {
 describe('UserDetailView', () => {
   it('does not render securityStamp anywhere, even though the API response carries it', async () => {
     vi.spyOn(api, 'GET').mockImplementation((path) => {
-      if (path === '/users/{id}') {
+      if (path === '/api/v1/users/{id}') {
         return Promise.resolve({
           data: {
             id: 'u1',
@@ -2003,7 +2009,7 @@ describe('UserDetailView', () => {
 
   it('shows the missingPermissions list from a 403 cannot-grant-permission-you-lack response', async () => {
     vi.spyOn(api, 'GET').mockImplementation((path) => {
-      if (path === '/users/{id}') {
+      if (path === '/api/v1/users/{id}') {
         return Promise.resolve({
           data: {
             id: 'u1',
@@ -2020,7 +2026,7 @@ describe('UserDetailView', () => {
           response: new Response(null, { status: 200 }),
         } as never);
       }
-      if (path === '/roles') {
+      if (path === '/api/v1/roles') {
         return Promise.resolve({
           data: { items: [{ id: 'r1', code: 'RECEIVER', name: 'Receiver', isSystem: true, isActive: true, permissions: [] }] },
           response: new Response(null, { status: 200 }),
@@ -2079,12 +2085,12 @@ export function UserDetailView({ userId }: { userId: string }) {
 
   const userQuery = useQuery({
     queryKey: ['user', userId],
-    queryFn: () => withAuthRetry(() => api.GET('/users/{id}', { params: { path: { id: userId } } })),
+    queryFn: () => withAuthRetry(() => api.GET('/api/v1/users/{id}', { params: { path: { id: userId } } })),
   });
 
   const rolesQuery = useQuery({
     queryKey: ['roles'],
-    queryFn: () => withAuthRetry(() => api.GET('/roles', {})),
+    queryFn: () => withAuthRetry(() => api.GET('/api/v1/roles', {})),
   });
 
   const [roleCode, setRoleCode] = useState('');
@@ -2094,7 +2100,7 @@ export function UserDetailView({ userId }: { userId: string }) {
   const grantRole = useMutation({
     mutationFn: async () => {
       setGrantError(null);
-      const result = await api.POST('/users/{id}/role-scopes', {
+      const result = await api.POST('/api/v1/users/{id}/role-scopes', {
         params: { path: { id: userId } },
         body: { roleCode, warehouseId, zoneIds: [] },
       });
