@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Shared primitives only — types every module may depend on.
+    Nothing domain-specific belongs here; if it knows what a pick is, it
+    belongs in a module.
+  -->
+
+</Project>

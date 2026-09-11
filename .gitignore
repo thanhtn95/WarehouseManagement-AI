@@ -1,0 +1,50 @@
+# ---------------------------------------------------------------------
+#  Build output
+# ---------------------------------------------------------------------
+bin/
+obj/
+artifacts/
+*.user
+*.suo
+
+# ---------------------------------------------------------------------
+#  Test and coverage output
+# ---------------------------------------------------------------------
+TestResults/
+coverage*.json
+coverage*.xml
+coverage*.cobertura.xml
+StrykerOutput/
+
+# ---------------------------------------------------------------------
+#  Local configuration and secrets
+#
+#  appsettings.Development.json is committed deliberately — it points at
+#  the Compose database. It also carries a known-literal JWT signing key so
+#  a developer can run the API locally without provisioning a secret first;
+#  Program.cs refuses to start with that literal outside Development, so it
+#  is inert anywhere else even though the file is tracked. Anything matching
+#  *.local.json or a .env file is not committed.
+# ---------------------------------------------------------------------
+*.local.json
+.env
+.env.*
+!.env.example
+
+# ---------------------------------------------------------------------
+#  Editors
+#
+#  .idea and .vs hold per-developer window state, not project settings.
+#  .vscode is tracked, so shared launch/task definitions survive.
+# ---------------------------------------------------------------------
+.idea/
+.vs/
+*.swp
+.DS_Store
+
+# ---------------------------------------------------------------------
+#  Frontend (web/, from Phase 1A onward)
+# ---------------------------------------------------------------------
+node_modules/
+dist/
+.vite/

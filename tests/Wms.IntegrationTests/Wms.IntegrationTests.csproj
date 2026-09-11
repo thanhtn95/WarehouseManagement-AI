@@ -1,0 +1,35 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Testcontainers against real PostgreSQL, always. SKIP LOCKED, advisory
+    locks, partition routing and deadlock behaviour do not exist in SQLite
+    or the EF in-memory provider, and those are precisely the mechanisms
+    carrying this system's correctness burden.
+
+    Needs a running Docker daemon — check `docker info` first if a run that
+    was passing suddenly isn't.
+  -->
+
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Wms.Api\Wms.Api.csproj" />
+    <ProjectReference Include="..\..\src\Wms.Worker\Wms.Worker.csproj" />
+    <ProjectReference Include="..\..\src\Wms.Migrator\Wms.Migrator.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="10.0.3" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.10.0" />
+    <PackageReference Include="Npgsql" Version="10.0.3" />
+    <PackageReference Include="Testcontainers.PostgreSql" Version="4.15.0" />
+    <PackageReference Include="xunit" Version="2.9.3" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="4.0.0">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+  </ItemGroup>
+
+</Project>

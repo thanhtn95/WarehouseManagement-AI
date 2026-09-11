@@ -1,0 +1,19 @@
+# Normalise on LF in the repository regardless of checkout platform.
+# Development is on Windows; CI runners and every deployed container are
+# Linux. Without this, line endings surface as diff noise between them.
+* text=auto eol=lf
+
+# Shell scripts must be LF even on a Windows checkout — the .claude hooks
+# and any container entrypoint are executed by bash.
+*.sh text eol=lf
+
+# Windows-only tooling that genuinely wants CRLF.
+*.cmd text eol=crlf
+*.bat text eol=crlf
+
+# Binary — never touched.
+*.png binary
+*.jpg binary
+*.webp binary
+*.pdf binary
+*.ico binary

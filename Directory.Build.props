@@ -1,0 +1,19 @@
+<Project>
+
+  <!--
+    Shared build settings for every project in the solution.
+    Conventions here are the ones the dotnet-modules skill treats as
+    non-negotiable — nullable reference types in particular: "an unexpected
+    ? is the compiler reporting a real gap, not noise to suppress with !".
+  -->
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+  </PropertyGroup>
+
+</Project>

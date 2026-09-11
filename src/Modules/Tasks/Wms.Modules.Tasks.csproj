@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Wms.SharedKernel\Wms.SharedKernel.csproj" />
+    <ProjectReference Include="..\Inventory\Wms.Modules.Inventory.csproj" />
+    <ProjectReference Include="..\Platform\Wms.Modules.Platform.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Npgsql" Version="10.0.3" />
+  </ItemGroup>
+
+</Project>

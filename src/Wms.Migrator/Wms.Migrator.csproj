@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    The one-shot migrator container. §11's deploy sequence runs the migrator
+    to completion BEFORE the API and worker containers restart, and checks
+    its exit code. That exit code is load-bearing: it is what stops a
+    half-migrated schema from going live under application code expecting
+    the new one.
+  -->
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>Wms.Migrator</RootNamespace>
+  </PropertyGroup>
+
+  <!--
+    Scripts are embedded rather than read from disk so the image is
+    self-contained. A migrator container that depends on a volume mount to
+    find its own migrations is one that can be deployed without them.
+    LogicalName keeps the resource names sortable and readable in logs.
+  -->
+  <ItemGroup>
+    <EmbeddedResource Include="..\..\db\migrations\*.sql">
+      <LogicalName>Migrations.%(Filename)%(Extension)</LogicalName>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="dbup-postgresql" Version="7.0.1" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <!--
+    HTTP endpoints, authentication, authorisation, request validation, and
+    the transactional write path. Runs on the wms_api database role: 5s
+    statement timeout, reserved connection pool (C7). Anything that could
+    take longer belongs in Wms.Worker.
+  -->
+
+  <ItemGroup>
+    <PackageReference Include="Npgsql" Version="10.0.3" />
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Wms.SharedKernel\Wms.SharedKernel.csproj" />
+    <ProjectReference Include="..\Modules\Identity\Wms.Modules.Identity.csproj" />
+    <ProjectReference Include="..\Modules\Catalog\Wms.Modules.Catalog.csproj" />
+    <ProjectReference Include="..\Modules\Inventory\Wms.Modules.Inventory.csproj" />
+    <ProjectReference Include="..\Modules\Tasks\Wms.Modules.Tasks.csproj" />
+    <ProjectReference Include="..\Modules\Inbound\Wms.Modules.Inbound.csproj" />
+    <ProjectReference Include="..\Modules\Platform\Wms.Modules.Platform.csproj" />
+  </ItemGroup>
+
+</Project>

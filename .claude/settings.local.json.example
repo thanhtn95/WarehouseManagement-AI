@@ -1,0 +1,11 @@
+{
+  "_comment": "Copy to settings.local.json for personal overrides. Gitignored.",
+  "permissions": {
+    "allow": [
+      "Bash(docker compose*)"
+    ]
+  },
+  "env": {
+    "DOTNET_CLI_TELEMETRY_OPTOUT": "1"
+  }
+}

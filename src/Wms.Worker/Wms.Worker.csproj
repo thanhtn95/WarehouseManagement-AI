@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk.Worker">
+
+  <!--
+    Three responsibilities, deliberately separable later (design doc §1.3):
+      1. Allocation consumer — one active per warehouse via advisory lock.
+         Phase 1B; allocation does not exist in 1A.
+      2. Outbox drain.
+      3. Scheduled jobs — reconciliation, lease expiry sweep, idempotency
+         record expiry, session cleanup, and role-permission-change
+         propagation (H12).
+    Runs on the wms_worker role: 300s statement timeout.
+  -->
+
+  <ItemGroup>
+    <ProjectReference Include="..\Wms.SharedKernel\Wms.SharedKernel.csproj" />
+    <ProjectReference Include="..\Modules\Identity\Wms.Modules.Identity.csproj" />
+    <ProjectReference Include="..\Modules\Inventory\Wms.Modules.Inventory.csproj" />
+    <ProjectReference Include="..\Modules\Platform\Wms.Modules.Platform.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.12" />
+    <PackageReference Include="Npgsql" Version="10.0.3" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,32 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Wms.Api/Wms.Api.csproj" />
+    <Project Path="src/Wms.Migrator/Wms.Migrator.csproj" />
+    <Project Path="src/Wms.SharedKernel/Wms.SharedKernel.csproj" />
+    <Project Path="src/Wms.Worker/Wms.Worker.csproj" />
+  </Folder>
+  <Folder Name="/src/Modules/" />
+  <Folder Name="/src/Modules/Catalog/">
+    <Project Path="src/Modules/Catalog/Wms.Modules.Catalog.csproj" />
+  </Folder>
+  <Folder Name="/src/Modules/Identity/">
+    <Project Path="src/Modules/Identity/Wms.Modules.Identity.csproj" />
+  </Folder>
+  <Folder Name="/src/Modules/Inbound/">
+    <Project Path="src/Modules/Inbound/Wms.Modules.Inbound.csproj" />
+  </Folder>
+  <Folder Name="/src/Modules/Inventory/">
+    <Project Path="src/Modules/Inventory/Wms.Modules.Inventory.csproj" />
+  </Folder>
+  <Folder Name="/src/Modules/Platform/">
+    <Project Path="src/Modules/Platform/Wms.Modules.Platform.csproj" />
+  </Folder>
+  <Folder Name="/src/Modules/Tasks/">
+    <Project Path="src/Modules/Tasks/Wms.Modules.Tasks.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Wms.ArchitectureTests/Wms.ArchitectureTests.csproj" />
+    <Project Path="tests/Wms.IntegrationTests/Wms.IntegrationTests.csproj" />
+    <Project Path="tests/Wms.UnitTests/Wms.UnitTests.csproj" />
+  </Folder>
+</Solution>
