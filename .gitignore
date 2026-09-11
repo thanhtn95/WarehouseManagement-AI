@@ -48,3 +48,13 @@ StrykerOutput/
 node_modules/
 dist/
 .vite/
+
+# ---------------------------------------------------------------------
+#  Agentic tooling scratch state
+#
+#  .superpowers/sdd/<plan>/ holds the ledger, dispatch briefs, and review
+#  packages subagent-driven-development produces while executing a plan.
+#  Working state for that run, not part of the project — the git history
+#  it produces is the record once a plan finishes.
+# ---------------------------------------------------------------------
+.superpowers/
