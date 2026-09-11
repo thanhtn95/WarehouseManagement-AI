@@ -11,7 +11,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "e2e": "playwright test",
-    "generate-api": "openapi-typescript http://localhost:5000/openapi/v1.json -o src/shared/api/schema.d.ts"
+    "generate-api": "openapi-typescript http://localhost:5299/openapi/v1.json -o src/shared/api/schema.d.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.9.1",
