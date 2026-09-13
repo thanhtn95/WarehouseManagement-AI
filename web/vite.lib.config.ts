@@ -40,6 +40,7 @@ export default defineConfig({
       entry: path.resolve(__dirname, 'src/components/ui/index.ts'),
       formats: ['es'],
       fileName: () => 'index.js',
+      cssFileName: 'styles',
     },
     rollupOptions: {
       external: ['react', 'react-dom', 'react/jsx-runtime'],
