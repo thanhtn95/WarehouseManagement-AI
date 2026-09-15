@@ -691,7 +691,7 @@ Because putaway is a directed, leased task, this phase exercises most of the arc
 
 | Area | Included | Deliberately crude |
 |---|---|---|
-| Auth | Operator badge/PIN, office login, device registration, shared-device sessions, supervisor override, auth audit log | Federation (D7) deferred |
+| Auth | Operator badge/PIN, office login (forced password change on first login), device registration, shared-device sessions, supervisor override, auth audit log | Federation (D7) deferred |
 | Roles | Permission catalogue, seeded system roles, warehouse and zone scoping, role management UI, custom role composition | — |
 | Master data | Item master with UoM hierarchy, location topology, handling units — with real maintenance screens | No bulk import; no ERP sync |
 | Receiving | Blind receipt, over/under/damage with discrepancy raising an exception | No ASN, no PO matching, no QC hold |
@@ -723,6 +723,21 @@ Criterion 5 is the one that matters most. It is the only test proving the comman
 **Note on reports.** Dashboards built against fifty bins and a few thousand movements will mislead you about query plans, because the plans that matter only change shape at volume. Seed a large synthetic movement history before trusting any report's performance.
 
 *Indicative duration: 5–7 weeks for one experienced full-stack developer; less with two. Confirm against actual team size.*
+
+**Status as of 2026-09-15 — a live progress snapshot, not part of the plan itself.** Unlike the rest of this section, the line below is checked and updated as the phase actually proceeds, the same kind of deliberate exception `wms-architecture-review.md`'s "Consolidated Open Decisions" table is to that document's own never-edit rule. Backend only; frontend status isn't tracked here.
+
+| Exit criterion | Status |
+|---|---|
+| 1. Receive 100, exact ledger + balance | ✅ Met — `ConfirmReceiptFactTests`, `ConfirmPutawayFactTests` |
+| 2. Reconciliation → zero variance | ✅ Met — `ReconciliationServiceTests` |
+| 3. Airplane-mode reboot, exactly-once | ⚠️ Partial — idempotency-key dedup proven at the backend; the device-reboot scenario itself needs the operator PWA, which doesn't exist yet |
+| 4. No duplicate lease, 30 concurrent operators | ⚠️ Partial — `TaskLeaseConcurrencyTests` proves no duplicate lease, but at 8 operators/50 iterations, not the specified 30-operator load harness |
+| 5. Over-receipt records 106 + exception, no error | ✅ Met — proven and mutation-tested |
+| 6. Missing `receipt.over_receive` blocked; supervisor override authorises | ❌ Not met — `POST /auth/elevate` doesn't exist; `receipt_confirmed` never conditionally checks `receipt.over_receive` |
+| 7. Scan-to-confirm latency baseline over real network | ❌ Not met — needs a real deployment, which doesn't exist yet |
+| Allocation concurrency test carried forward from 1B | ❌ Not started — no allocation test anywhere in the suite |
+
+Also short of the scope table above, confirmed by reading the actual registered routes rather than the design document's intent: no admin API exists yet for warehouses, zones, locations, items, or handling units (master data is only reachable by direct SQL — every integration test seeds it that way); no device registration/management endpoints; `POST /roles`/`PATCH /roles/{id}` don't exist so no custom role can actually be composed; and the auth audit log has no read path. Each of these has its own entry in `docs/shortcuts.md`. The hard architectural machinery — the ledger, the command/fact split, idempotent sync, task leasing, reconciliation — is built and well-tested; what's short is a real slice of the admin/CRUD surface, the supervisor-override mechanism, and the carried-forward allocation test.
 
 ### Phase 1B — Fulfilment
 

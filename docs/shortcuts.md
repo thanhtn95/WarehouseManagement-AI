@@ -158,6 +158,51 @@ Format: `- [phase] what was shortcut → what replaces it (design doc §)`
   it belongs in middleware rather than one endpoint, and building it per
   endpoint now would have to be undone → add the version-gate middleware with
   the auth pipeline (design doc §3.2, §5.3, §7.1)
+- [1A] No admin API exists for master data at all — warehouse, zone,
+  location, item, or handling unit. Every one of these is only reachable by
+  direct SQL today; every integration test that needs one (`UserDirectoryTests`,
+  `ConfirmReceiptFactTests`, `ReconciliationServiceTests`,
+  `StockLedgerTransferTests`, `ReceiptEndpointTests`, and more) `INSERT`s it
+  directly rather than through the API, because there is no other way. The
+  Phase 1A scope table promises "real maintenance screens" for exactly this
+  data → ship the already-designed §5.11 CRUD endpoints (warehouses, zones,
+  locations, items, handling units)
+- [1A] No admin API exists for device registration or management either —
+  `AuthenticationTests` and `UserDirectoryTests` both `INSERT INTO device`
+  directly. "Device registration" is named explicitly in the Phase 1A scope
+  table → ship the already-designed `GET/POST /devices`, `PATCH /devices/{id}`
+  (design doc §5.11)
+- [1A] No way to compose or edit a custom role. `GET /roles` and
+  `GET /permissions` (list-only) are the only role/permission endpoints
+  registered; `POST /roles` and `PATCH /roles/{id}` don't exist. Custom role
+  composition was explicitly pulled forward into Phase 1A earlier in this
+  project's history specifically so a site isn't stuck with only the seeded
+  system roles, and that's still the case today → ship the already-designed
+  endpoints (design doc §5.11)
+- [1A] The auth audit log has no read path. `auth_event` rows are written on
+  every login, lockout, override, and credential/role change, but nothing
+  exposes them — the only way to inspect one today is a direct SQL query
+  against a table whose whole purpose is answering "who granted this person
+  adjustment-approval rights, and when." "Auth audit log" is named explicitly
+  in the Phase 1A scope table → ship a `GET` endpoint (open question already
+  flagged in `wms-screen-inventory.md`; needs its own permission per that
+  document's finding, not a repurposed existing one)
+- [1A] **Supervisor override has no backend mechanism at all — Phase 1A exit
+  criterion 6 is unmet.** `POST /auth/elevate` doesn't exist anywhere in the
+  API (only referenced in a `SyncFactsEndpoint.cs` code comment), and
+  `receipt_confirmed` unconditionally requires only `receipt.confirm` —
+  `receipt.over_receive` is never conditionally checked even when a fact
+  represents an over-receipt, so there is currently nothing to override →
+  ship `POST /auth/elevate` (design doc §6.5) and wire a conditional
+  `receipt.over_receive` check into `ConfirmReceiptFactHandler`
+- [1A] **The allocation concurrency test the proposal names as "carry
+  forward from 1B now" was never written.** §13 of the proposal is explicit:
+  two orders, one remaining unit, assert exactly one succeeds, even with no
+  picking UI behind it — "allocation is the hardest correctness problem in
+  the system... a failing test sitting in the suite is cheap; discovering the
+  problem in 1B is not." Nothing named `allocation` exists anywhere in
+  `tests/` → write it now, per the proposal's own instruction, not deferred
+  to when picking is actually built
 
 ## Closed
 

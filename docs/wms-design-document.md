@@ -168,6 +168,9 @@ credential
   user_id           uuid FK -> app_user
   credential_type   text CHECK (credential_type IN ('password','pin','badge'))
   secret_hash       text NOT NULL          -- Argon2id
+  must_change       boolean NOT NULL DEFAULT false  -- password only; true from
+                                           -- POST /users until the holder
+                                           -- completes POST /auth/credential-change
   failed_attempts   int  NOT NULL DEFAULT 0
   locked_until      timestamptz
   last_used_at      timestamptz
@@ -897,9 +900,26 @@ Format: `→` request body, `←` response. Permission and phase follow each pat
 
 ← 401 { "type": "…/unauthenticated", "title": "Invalid credentials" }
 ← 423 { "type": "…/account-locked", "retryAfter": 900 }
+← 403 { "type": "…/credential-change-required",
+        "changeToken": "018f3c…", "expiresIn": 300 }
 ```
 
 Failure responses are deliberately identical for unknown email and wrong password.
+
+**A password credential created with `must_change = true` never issues an access/refresh token pair on a correct password.** Instead of the normal `200`, a correct password against such a credential returns `403 .../credential-change-required` with a single-use `changeToken` — the same short-lived-grant shape as `POST /auth/elevate`'s `grantToken`, not a session. The password was still verified (this is not a failure response, and it does not count against lockout), but nothing beyond "set a new password" is reachable until the change completes. Set on every password credential `POST /users` creates; cleared, along with the flag, by a successful `POST /auth/credential-change`. PIN and badge credentials never carry this — operator credentials are issued by an admin/supervisor for repeated shared-device access rather than a personal secret the holder is expected to keep private and periodically rotate, so `POST /auth/operator/login` never returns this response regardless of `must_change` (which stays `false` for those credential types).
+
+---
+
+**`POST /auth/credential-change`** · — (bearer is a `changeToken`, not a session) · 1A
+
+```jsonc
+→ { "changeToken": "018f3c…", "newSecret": "…" }
+
+← 200 { "id": "…" }                       // must_change cleared; log in normally next
+← 401 { "type": "…/unauthenticated", "title": "Invalid or expired changeToken" }
+```
+
+Single-use, bound to the credential it was issued for — same discipline as `POST /auth/elevate`'s `grantToken` (§6.5). Writes `auth_event(credential_reset)`. No `security_stamp` bump: no token was ever issued off this credential's `must_change` state for the stamp to invalidate, so there is nothing yet in circulation to revoke.
 
 ---
 
@@ -2256,6 +2276,8 @@ users.
 
 `validUntil` defaults to 90 days for operators, preventing the accumulation of live credentials for departed agency staff.
 
+Every `password` credential created here is seeded with `must_change = true` (§2.1, §5.1) — the account's very first staff login returns `.../credential-change-required` rather than a session, regardless of who set the initial value. `pin` and `badge` credentials are never flagged this way (§5.1). This covers the *first-login* case only; an admin-initiated reset of an *existing* credential is the separate "future credential-reset endpoint" this section has long anticipated, and remains its own open item, not resolved here.
+
 **`user.manage` alone opens an account; it does not staff it.** Assigning a
 role or setting a credential are the same acts `POST /users/{id}/role-scopes`
 and a future credential-reset endpoint gate — reachable here by a shorter
@@ -3159,7 +3181,7 @@ Idempotent and re-runnable end to end.
 2. Migrations from zero
 3. Seed: permissions, system roles, reason codes (0042), sentinel lot UUID,
          default owner, warehouse, day_boundary_time, locale
-4. First administrator, credential change forced on first login
+4. First administrator — `POST /users`, same `must_change` mechanism every password credential gets (§2.1, §5.1), not a provisioning-specific behaviour
 5. Configuration defaults from config_schema, then customer overrides
      POST /config/import { artefact }
 6. Register with control plane; first /_fleet/health confirms success
@@ -3233,6 +3255,7 @@ Where a full freeze is impossible, count by zone across several nights and freez
 | `401` | `/unauthenticated` | Missing or expired token | Refresh once, then re-login |
 | `403` | `/insufficient-permission` | Lacks permission or scope | Offer elevation if `elevation.possible` |
 | `403` | `/same-actor` | Approver equals actor | Find a different supervisor |
+| `403` | `/credential-change-required` | Password correct but `must_change` flagged | `POST /auth/credential-change` with the returned `changeToken`, then log in again |
 | `404` | `/not-found` | Unknown id | Refresh cached master data |
 | `409` | `/insufficient-stock` | Allocation could not satisfy | Partial allocation already applied |
 | `409` | `/idempotency-conflict` | Same key, different payload | Quarantine; this is a client bug |
@@ -3988,7 +4011,7 @@ Bootstrap sequence, idempotent and re-runnable:
 1. Infrastructure from IaC — database, object storage, compute, DNS, TLS.
 2. Schema from migration zero.
 3. Seed: permission catalogue, system roles, sentinel lot UUID, default owner, warehouse record, day-boundary configuration, locale.
-4. First administrator with a forced credential change.
+4. First administrator with a forced credential change — the general `must_change` mechanism (§2.1, §5.1), not something special-cased for provisioning.
 5. Default configuration set from `config_schema` defaults, then customer overrides applied from an import artefact.
 6. Register with the control plane; first heartbeat confirms success.
 7. Smoke test: create an item, a location, receive one unit, put it away, reconcile, delete. Fail loudly rather than handing over a broken deployment.

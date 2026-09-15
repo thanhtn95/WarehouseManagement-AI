@@ -32,7 +32,7 @@ Every screen that mutates stock through operator action does so by queuing a **f
 | Screen | Route | Purpose | Primary user | Key fields | Primary actions | Endpoints |
 |---|---|---|---|---|---|---|
 | Staff Login | `/admin/login` | Email/password sign-in for office staff | All staff roles | email, password | Sign in | `POST /auth/staff/login` |
-| Forced credential change | `/admin/login/force-password-change` | First-login-after-provisioning forced reset (§6.20 step 4) | System Administrator (first login) | new password, confirm | Set password | — (auth flow) |
+| Forced credential change | `/admin/login/force-password-change` | Every staff account's very first login on a password credential — not provisioning-specific, and not shown again once the credential has been changed once | Any staff role, on their own account's first login | new password, confirm | Submit new password, then log in again normally | `POST /auth/credential-change` |
 
 ### Admin Dashboard
 
